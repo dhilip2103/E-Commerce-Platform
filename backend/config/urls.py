@@ -21,5 +21,8 @@ from .views import home
 urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
+    
     path('api/products/', include('products.urls')),  # Include the products app URLs
+
+    path('api/users/', include('users.urls')),
 ]
