@@ -8,7 +8,12 @@ from rest_framework import status
 
 from .models import Cart, CartItem
 from products.models import Product
-from .serializers import CartSerializer, CartItemCreateSerializer
+from .serializers import (
+    CartSerializer, 
+    CartItemCreateSerializer,
+    CartItemUpdateSerializer
+
+)
 
 class CartDetailAPIView(APIView):
     def get(self, request, pk):
@@ -92,18 +97,19 @@ class AddToCartAPIView(APIView):
             
 class CartItemUpdateAPIView(APIView):
     def patch(self, request, pk):
+
         serializer = CartItemUpdateSerializer(data = request.data)
 
         if not serializer.is_valid():
             return Response(
-                serializer.error,
+                serializer.errors,
                 status = status.HTTP_400_BAD_REQUEST
             )
         quantity = serializer.validated_data['quantity']
 
         try:
             cart_item =  CartItem.objects.get(pk=pk)
-        except CartItem.DoesNootExist:
+        except CartItem.DoesNotExist:
             return Response(
                 {"error":"Cart Item Not found"},
                 status = status.HTTP_404_NOT_FOUND
@@ -116,13 +122,14 @@ class CartItemUpdateAPIView(APIView):
                 {"error":"Not enough stock"},
                 status = status.HTTP_400_BAD_REQUEST
             )
+
         cart_item.quantity = quantity 
         cart_item.save()
 
         return Response(
             {
                 "message":"Cart quantity updated",
-                "cart_item_id" cart_item.id,
+                "cart_item_id": cart_item.id,
                 "product":product.name,
                 "quantity": cart_item.quantity
             },

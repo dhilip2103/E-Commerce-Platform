@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Cart, CartItem
+
 from products.serializers import ProductSerializer
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -33,4 +34,5 @@ class CartItemCreateSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value = 1)
 
-    
+class CartItemUpdateSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(min_value=1)
