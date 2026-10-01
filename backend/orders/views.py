@@ -165,13 +165,15 @@ class CartItemUpdateAPIView(APIView):
         )
 
 class CheckoutAPIView(APIView):
+
     def post(self, request, cart_id):
+
         serializer = CheckoutSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response(
                 serializer.errors,
-                status = status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         address_id = serializer.validated_data['address_id']
@@ -180,27 +182,27 @@ class CheckoutAPIView(APIView):
             cart = Cart.objects.get(pk=cart_id)
         except Cart.DoesNotExist:
             return Response(
-                {"error":"Cart not found"},
-                status = status.HTTP_404_NOT_FOUND
+                {"error": "Cart not found"},
+                status=status.HTTP_404_NOT_FOUND
             )
 
         try:
             address = Address.objects.get(
-                pk = address_id,
-                user = cart.user
+                pk=address_id,
+                user=cart.user
             )
         except Address.DoesNotExist:
             return Response(
-                {"error":"Address not found for this user"},
-                status = status.HTTP_404_NOT_FOUND
+                {"error": "Address not found for this user"},
+                status=status.HTTP_404_NOT_FOUND
             )
-        
-        cart_items = CartItem.objects.filter(cart = cart)
+
+        cart_items = CartItem.objects.filter(cart=cart)
 
         if not cart_items.exists():
             return Response(
-                {"error":"Cart is empty"},
-                status = status.HTTP_400_BAD_REQUEST
+                {"error": "Cart is empty"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         total_amount = 0
@@ -214,40 +216,42 @@ class CheckoutAPIView(APIView):
                     {
                         "error": f"Not enough stock for {product.name}"
                     },
-                    status = status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST
                 )
+
             total_amount += product.price * cart_item.quantity
-        
-            with transaction.atomic():
 
-                order = order.objects.create(
-                    user = Cart.user,
-                    address=address,
-                    total_amount = total_amount,
-                    status = 'PENDING'
-                )
-                for cart_item in cart_items:
-                    product = cart_item.product
+        with transaction.atomic():
 
-                    OrderItem.objects.create(
-                        order = order,
-                        product = product,
-                        quantity = cart_item.quantity,
-                        price = product.price
-                    )
-
-                    product.stock -= cart_item.quantity
-                    product.save()
-            
-                cart_items.delete()
-        
-            return Response(
-                {
-                    "message":"Order Placed succesfully",
-                    "order_id": order.id,
-                    "total_amount": str(order.total_amount),
-                    "status": order.status
-                },
-                status = status.HTTP_201_CREATED
+            order = Order.objects.create(
+                user=cart.user,
+                address=address,
+                total_amount=total_amount,
+                status='PENDING'
             )
 
+            for cart_item in cart_items:
+
+                product = cart_item.product
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=cart_item.quantity,
+                    price=product.price
+                )
+
+                product.stock -= cart_item.quantity
+                product.save()
+
+            cart_items.delete()
+
+        return Response(
+            {
+                "message": "Order placed successfully",
+                "order_id": order.id,
+                "total_amount": str(order.total_amount),
+                "status": order.status
+            },
+            status=status.HTTP_201_CREATED
+        )
