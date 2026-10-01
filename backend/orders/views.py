@@ -174,7 +174,7 @@ class CheckoutAPIView(APIView):
                 status = status.HTTP_400_BAD_REQUEST
             )
 
-        adress_id = serializer.validated_data['address_id']
+        address_id = serializer.validated_data['address_id']
 
         try:
             cart = Cart.objects.get(pk=cart_id)
@@ -195,7 +195,7 @@ class CheckoutAPIView(APIView):
                 status = status.HTTP_404_NOT_FOUND
             )
         
-        cart_items = CartItem.objexts.filter(cart = cart)
+        cart_items = CartItem.objects.filter(cart = cart)
 
         if not cart_items.exists():
             return Response(
@@ -226,28 +226,28 @@ class CheckoutAPIView(APIView):
                     total_amount = total_amount,
                     status = 'PENDING'
                 )
-            for cart_item in cart_items:
-                product = cart_item.product
+                for cart_item in cart_items:
+                    product = cart_item.product
 
-                OrderItem.objects.create(
-                    order = order,
-                    product = product,
-                    quantity = cart_item.quantity,
-                    price = product.price
-                )
+                    OrderItem.objects.create(
+                        order = order,
+                        product = product,
+                        quantity = cart_item.quantity,
+                        price = product.price
+                    )
 
-                product.stock -= cart_item.quantity
-                product.save()
+                    product.stock -= cart_item.quantity
+                    product.save()
             
-            cart_items.delete()
+                cart_items.delete()
         
-        return Response(
-            {
-                "message":"Order Placed succesfully",
-                "order_id": order.id,
-                "total_amount": str(order.total_amount),
-                "status": order.status
-            },
-            status = status.HTTP_201_CREATED
-        )
+            return Response(
+                {
+                    "message":"Order Placed succesfully",
+                    "order_id": order.id,
+                    "total_amount": str(order.total_amount),
+                    "status": order.status
+                },
+                status = status.HTTP_201_CREATED
+            )
 

@@ -16,7 +16,7 @@ urlpatterns = [
     ),
 
     path(
-        'cart/<int:cart_id>/checkout',
+        'cart/<int:cart_id>/checkout/',
         CheckoutAPIView.as_view(),
         name='checkout'
     ),
